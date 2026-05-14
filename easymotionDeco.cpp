@@ -58,7 +58,7 @@ std::string CHyprEasyLabel::getDisplayName() {
 }
 
 void CHyprEasyLabel::renderMotionString(Vector2D& bufferSize, const float scale) {
-	m_tTextTex = makeShared<CGLTexture>();
+	m_tTextTex = makeShared<Render::GL::CGLTexture>();
 	int textSize = m_iTextSize;
 	const auto scaledSize = textSize * scale;
 	const auto textColor = CHyprColor(m_cTextColor);

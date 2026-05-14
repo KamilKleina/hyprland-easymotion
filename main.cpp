@@ -8,6 +8,7 @@
 #include <hyprland/src/Compositor.hpp>
 #include <hyprland/src/desktop/view/Window.hpp>
 #include <hyprland/src/config/ConfigManager.hpp>
+#include <hyprland/src/config/shared/parserUtils/ParserUtils.hpp>
 #include <hyprland/src/managers/EventManager.hpp>
 #include <hyprland/src/managers/input/InputManager.hpp>
 #include <hyprland/src/event/EventBus.hpp>
@@ -109,7 +110,7 @@ static bool parseBorderGradient(std::string VALUE, Config::CGradientValueData *D
 		}
 
 		try {
-			DATA->m_colors.push_back(CHyprColor(configStringToInt(var).value_or(0)));
+			DATA->m_colors.push_back(CHyprColor(Config::ParserUtils::parseColor(var).value_or(0)));
 		} catch (std::exception& e) {
 			Log::logger->log(Log::WARN, "Error parsing gradient {}", V);
 		}
@@ -174,20 +175,20 @@ SDispatchResult easymotionDispatch(std::string args)
 		if (kv[0] == "action") {
 			actionDesc.commandString = kv[1];
 		} else if (kv[0] == "textsize") {
-			actionDesc.textSize = configStringToInt(kv[1]).value_or(15);
+			actionDesc.textSize = Config::ParserUtils::parseInt(kv[1]).value_or(15);
 		} else if (kv[0] == "textcolor") {
-			actionDesc.textColor = CHyprColor(configStringToInt(kv[1]).value_or(0xffffffff));
+			actionDesc.textColor = CHyprColor(Config::ParserUtils::parseColor(kv[1]).value_or(0xffffffff));
 		} else if (kv[0] == "bgcolor") {
-			actionDesc.backgroundColor = CHyprColor(configStringToInt(kv[1]).value_or(0));
+			actionDesc.backgroundColor = CHyprColor(Config::ParserUtils::parseColor(kv[1]).value_or(0));
 		} else if (kv[0] == "textfont") {
 			actionDesc.textFont = kv[1];
 		} else if (kv[0] == "textpadding") {
 			CVarList2 padVars = CVarList2(kv[1], 0, 's');
 			actionDesc.boxPadding.parseGapData(padVars);
 		} else if (kv[0] == "rounding") {
-			actionDesc.rounding = configStringToInt(kv[1]).value_or(0);
+			actionDesc.rounding = Config::ParserUtils::parseInt(kv[1]).value_or(0);
 		} else if (kv[0] == "bordersize") {
-			actionDesc.borderSize = configStringToInt(kv[1]).value_or(0);
+			actionDesc.borderSize = Config::ParserUtils::parseInt(kv[1]).value_or(0);
 		} else if (kv[0] == "bordercolor") {
 			CVarList varlist(kv[1], 0, 's');
 			actionDesc.borderColor.m_colors.clear();
@@ -201,9 +202,9 @@ SDispatchResult easymotionDispatch(std::string args)
 		} else if (kv[0] == "motionlabels") {
 			actionDesc.motionLabels = kv[1];
 		} else if (kv[0] == "blur") {
-			actionDesc.blur = configStringToInt(kv[1]).value_or(1);
+			actionDesc.blur = Config::ParserUtils::parseInt(kv[1]).value_or(1);
 		} else if (kv[0] == "xray") {
-			actionDesc.xray = configStringToInt(kv[1]).value_or(1);
+			actionDesc.xray = Config::ParserUtils::parseInt(kv[1]).value_or(1);
 		} else if (kv[0] == "blurA") {
 			try {
 				actionDesc.blurA = std::stof(kv[1]);
@@ -213,7 +214,7 @@ SDispatchResult easymotionDispatch(std::string args)
 		} else if (kv[0] == "fullscreen_action") {
 			actionDesc.fullscreen_action = kv[1];
 		} else if (kv[0] == "only_special") {
-			actionDesc.only_special = configStringToInt(kv[1]).value_or(1);
+			actionDesc.only_special = Config::ParserUtils::parseInt(kv[1]).value_or(1);
 		}
 	}
 
@@ -279,8 +280,8 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
 
 	HyprlandAPI::addConfigValue(PHANDLE, "plugin:easymotion:textsize", Hyprlang::INT{15});
 
-	HyprlandAPI::addConfigValue(PHANDLE, "plugin:easymotion:textcolor", Hyprlang::INT{configStringToInt("rgba(ffffffff)").value_or(0xffffffff)});
-	HyprlandAPI::addConfigValue(PHANDLE, "plugin:easymotion:bgcolor", Hyprlang::INT{configStringToInt("rgba(000000ff)").value_or(0xff)});
+	HyprlandAPI::addConfigValue(PHANDLE, "plugin:easymotion:textcolor", Hyprlang::INT{Config::ParserUtils::parseColor("rgba(ffffffff)").value_or(0xffffffff)});
+	HyprlandAPI::addConfigValue(PHANDLE, "plugin:easymotion:bgcolor", Hyprlang::INT{Config::ParserUtils::parseColor("rgba(000000ff)").value_or(0xff)});
 	HyprlandAPI::addConfigValue(PHANDLE, "plugin:easymotion:textfont", Hyprlang::STRING{"Sans"});
 	HyprlandAPI::addConfigValue(PHANDLE, "plugin:easymotion:textpadding", Hyprlang::STRING{"0"});
 	HyprlandAPI::addConfigValue(PHANDLE, "plugin:easymotion:bordersize", Hyprlang::INT{0});
