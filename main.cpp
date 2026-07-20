@@ -1,15 +1,19 @@
 #include <hyprland/src/desktop/Workspace.hpp>
+#include <hyprland/src/desktop/state/WindowState.hpp>
+#include <hyprland/src/state/MonitorState.hpp>
 #include <hyprland/src/plugins/PluginAPI.hpp>
 #include <string>
 #include <unistd.h>
 
 #include <any>
+#include <cmath>
 #include <ranges>
 #include <hyprland/src/Compositor.hpp>
 #include <hyprland/src/desktop/view/Window.hpp>
 #include <hyprland/src/config/ConfigManager.hpp>
 #include <hyprland/src/config/shared/parserUtils/ParserUtils.hpp>
 #include <hyprland/src/managers/EventManager.hpp>
+#include <hyprland/src/managers/fullscreen/FullscreenController.hpp>
 #include <hyprland/src/managers/input/InputManager.hpp>
 #include <hyprland/src/event/EventBus.hpp>
 #include <hyprland/src/debug/log/Logger.hpp>
@@ -30,8 +34,8 @@ APICALL EXPORT std::string PLUGIN_API_VERSION() {
 SDispatchResult easymotionExitDispatch(std::string args)
 {
 	for (auto &ml : g_pGlobalState->motionLabels | std::ranges::views::reverse) {
-		if (ml->m_origFSMode != ml->getOwner()->m_fullscreenState.internal)
-			g_pCompositor->setWindowFullscreenInternal(ml->getOwner(), ml->m_origFSMode);
+		if (ml->m_origFSMode != Fullscreen::controller()->getFullscreenModes(ml->getOwner()).internal)
+			Fullscreen::controller()->setFullscreenMode(ml->getOwner(), ml->m_origFSMode);
 		ml->getOwner()->removeWindowDeco(ml.get());
 	}
 	HyprlandAPI::invokeHyprctlCommand("dispatch", "submap reset");
@@ -70,14 +74,14 @@ void addLabelToWindow(PHLWINDOW window, SMotionActionDesc *actionDesc, std::stri
 	g_pGlobalState->motionLabels.emplace_back(motionlabel);
 	motionlabel->m_self = motionlabel;
 	motionlabel->draw(window->m_monitor.lock(), 1.0);
-	motionlabel->m_origFSMode = window->m_fullscreenState.internal;
-	if ((motionlabel->m_origFSMode != eFullscreenMode::FSMODE_NONE) && (actionDesc->fullscreen_action != "none"))
+	motionlabel->m_origFSMode = Fullscreen::controller()->getFullscreenModes(window).internal;
+	if ((motionlabel->m_origFSMode != Fullscreen::FSMODE_NONE) && (actionDesc->fullscreen_action != "none"))
 	{
 		if (actionDesc->fullscreen_action == "maximize")
 		{
-			g_pCompositor->setWindowFullscreenInternal(window, FSMODE_MAXIMIZED);
+			Fullscreen::controller()->setFullscreenMode(window, Fullscreen::FSMODE_MAXIMIZED);
 		} else if (actionDesc->fullscreen_action == "toggle") {
-			g_pCompositor->setWindowFullscreenInternal(window, FSMODE_NONE);
+			Fullscreen::controller()->setFullscreenMode(window, Fullscreen::FSMODE_NONE);
 		}
 	}
 	HyprlandAPI::addWindowDecoration(PHANDLE, window, std::move(motionlabel));
@@ -95,7 +99,7 @@ static bool parseBorderGradient(std::string VALUE, Config::CGradientValueData *D
 		if (var.find("deg") != std::string::npos) {
 			// last arg
 			try {
-				DATA->m_angle = std::stoi(var.substr(0, var.find("deg"))) * (PI / 180.0); // radians
+				DATA->m_angle = std::stoi(var.substr(0, var.find("deg"))) * (M_PI / 180.0); // radians
 			} catch (...) {
         		Log::logger->log(Log::WARN, "Error parsing gradient {}", V);
 				return false;
@@ -228,10 +232,10 @@ SDispatchResult easymotionDispatch(std::string args)
 	std::transform(actionDesc.fullscreen_action.begin(), actionDesc.fullscreen_action.end(), actionDesc.fullscreen_action.begin(), tolower);
 	int key_idx = 0;
 
-	for (auto &w : g_pCompositor->m_windows) {
-		for (auto &m : g_pCompositor->m_monitors) {
+	for (auto &w : Desktop::windowState()->windows()) {
+		for (auto &m : State::monitorState()->monitors()) {
 			if (w->m_workspace == m->m_activeWorkspace || m->m_activeSpecialWorkspace == w->m_workspace) {
-				if (w->isHidden() || !w->m_isMapped || w->m_fadingOut)
+				if (w->isHidden() || !w->m_isMapped)
 					continue;
 				if (m->m_activeSpecialWorkspace && w->m_workspace != m->m_activeSpecialWorkspace && actionDesc.only_special)
 					continue;

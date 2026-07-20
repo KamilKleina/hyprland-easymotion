@@ -1,6 +1,7 @@
 #pragma once
 
 #include <hyprland/src/config/shared/complex/ComplexDataTypes.hpp>
+#include <hyprland/src/managers/fullscreen/FullscreenController.hpp>
 #include <string>
 
 #include <hyprland/src/render/decorations/IHyprWindowDecoration.hpp>
@@ -57,7 +58,7 @@ class CHyprEasyLabel : public IHyprWindowDecoration {
 		int                                m_iBorderSize;
 		Config::CGradientValueData	   m_cBorderGradient;
 		WP<CHyprEasyLabel>                 m_self;
-		eFullscreenMode                    m_origFSMode;
+		Fullscreen::eFullscreenMode        m_origFSMode;
 
 
 

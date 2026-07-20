@@ -2,6 +2,7 @@
 
 #include <cairo/cairo.h>
 #include <hyprland/src/Compositor.hpp>
+#include <hyprland/src/desktop/view/types/Geometric.hpp>
 #include <hyprland/src/render/pass/RectPassElement.hpp>
 #include <hyprland/src/render/pass/TexPassElement.hpp>
 #include <hyprland/src/render/pass/BorderPassElement.hpp>
@@ -212,11 +213,11 @@ CBox CHyprEasyLabel::assignedBoxGlobal() {
 	const auto PWINDOW = m_pWindow.lock();
 	double boxHeight, boxWidth;
 	double boxSize;
-	boxHeight = PWINDOW->m_realSize->value().y * 0.10;
-	boxWidth = PWINDOW->m_realSize->value().x * 0.10;
+	boxHeight = PWINDOW->size(Desktop::View::IGeometric::GEOMETRIC_CURRENT).y * 0.10;
+	boxWidth = PWINDOW->size(Desktop::View::IGeometric::GEOMETRIC_CURRENT).x * 0.10;
 	boxSize = std::min(boxHeight, boxWidth);
-	double boxX = PWINDOW->m_realPosition->value().x + (PWINDOW->m_realSize->value().x-boxSize)/2;
-	double boxY = PWINDOW->m_realPosition->value().y + (PWINDOW->m_realSize->value().y-boxSize)/2;
+	double boxX = PWINDOW->position(Desktop::View::IGeometric::GEOMETRIC_CURRENT).x + (PWINDOW->size(Desktop::View::IGeometric::GEOMETRIC_CURRENT).x-boxSize)/2;
+	double boxY = PWINDOW->position(Desktop::View::IGeometric::GEOMETRIC_CURRENT).y + (PWINDOW->size(Desktop::View::IGeometric::GEOMETRIC_CURRENT).y-boxSize)/2;
 	CBox box = {boxX, boxY, boxSize, boxSize};
 
 	const auto PWORKSPACE      = PWINDOW->m_workspace;
