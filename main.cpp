@@ -20,6 +20,10 @@
 #include <hyprutils/string/VarList.hpp>
 #include <strings.h>
 
+extern "C" {
+#include <lua.h>
+}
+
 #include "easymotionDeco.hpp"
 #include "globals.hpp"
 
@@ -38,7 +42,7 @@ SDispatchResult easymotionExitDispatch(std::string args)
 			Fullscreen::controller()->setFullscreenMode(ml->getOwner(), ml->m_origFSMode);
 		ml->getOwner()->removeWindowDeco(ml.get());
 	}
-	HyprlandAPI::invokeHyprctlCommand("dispatch", "submap reset");
+	g_pKeybindManager->m_dispatchers["submap"]("reset");
 	g_pEventManager->postEvent(SHyprIPCEvent{"easymotionexit", ""});
 	return {};
 
@@ -49,7 +53,10 @@ SDispatchResult easymotionActionDispatch(std::string args)
 	for (auto &ml : g_pGlobalState->motionLabels) {
 		if (ml->m_szKey == args) {
 			g_pEventManager->postEvent(SHyprIPCEvent{"easymotionselect", std::format("{},{}", ml->m_szWindowAddress, ml->m_szKey)});
-			g_pKeybindManager->m_dispatchers["exec"](ml->m_szActionCmd);
+			if (ml->m_szActionCmd.empty())
+				g_pKeybindManager->m_dispatchers["focuswindow"]("address:" + ml->m_szWindowAddress);
+			else
+				g_pKeybindManager->m_dispatchers["exec"](ml->m_szActionCmd);
 			easymotionExitDispatch("");
 			break;
 		}
@@ -249,7 +256,7 @@ SDispatchResult easymotionDispatch(std::string args)
 	}
 
 	if (!g_pGlobalState->motionLabels.empty())
-		HyprlandAPI::invokeHyprctlCommand("dispatch", "submap __easymotionsubmap__");
+		g_pKeybindManager->m_dispatchers["submap"]("__easymotionsubmap__");
 
 	return {};
 }
@@ -279,6 +286,12 @@ bool oneasymotionKeypress(const IKeyboard::SKeyEvent& ev) {
 	return false;
 }
 
+static int luaEasymotion(lua_State* L) {
+	const char* arg = lua_tostring(L, 1);
+	easymotionDispatch(arg ? arg : "");
+	return 0;
+}
+
 APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
 	PHANDLE = handle;
 
@@ -304,6 +317,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
 	HyprlandAPI::addDispatcherV2(PHANDLE, "easymotion", easymotionDispatch);
 	HyprlandAPI::addDispatcherV2(PHANDLE, "easymotionaction", easymotionActionDispatch);
 	HyprlandAPI::addDispatcherV2(PHANDLE, "easymotionexit", easymotionExitDispatch);
+	HyprlandAPI::addLuaFunction(PHANDLE, "easymotion", "dispatch", luaEasymotion);
 	static auto KPHOOK = Event::bus()->m_events.input.keyboard.key.listen([&](IKeyboard::SKeyEvent ev, Event::SCallbackInfo& info) {
 		info.cancelled = oneasymotionKeypress(ev);
 	});
