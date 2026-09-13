@@ -138,47 +138,12 @@ static bool parseBorderGradient(std::string VALUE, Config::CGradientValueData *D
 
 SDispatchResult easymotionDispatch(std::string args)
 {
-	static auto *const TEXTSIZE = (Hyprlang::INT* const*)HyprlandAPI::getConfigValue(PHANDLE, "plugin:easymotion:textsize")->getDataStaticPtr();
-
-	static auto *const TEXTCOLOR = (Hyprlang::INT* const *)HyprlandAPI::getConfigValue(PHANDLE, "plugin:easymotion:textcolor")->getDataStaticPtr();
-	static auto *const BGCOLOR = (Hyprlang::INT* const *)HyprlandAPI::getConfigValue(PHANDLE, "plugin:easymotion:bgcolor")->getDataStaticPtr();
-	static auto *const TEXTFONT = (Hyprlang::STRING const *)HyprlandAPI::getConfigValue(PHANDLE, "plugin:easymotion:textfont")->getDataStaticPtr();
-	static auto *const TEXTPADDING = (Hyprlang::STRING const *)HyprlandAPI::getConfigValue(PHANDLE, "plugin:easymotion:textpadding")->getDataStaticPtr();
-	static auto *const BORDERSIZE = (Hyprlang::INT* const *)HyprlandAPI::getConfigValue(PHANDLE, "plugin:easymotion:bordersize")->getDataStaticPtr();
-	static auto *const BORDERCOLOR = (Hyprlang::STRING const *)HyprlandAPI::getConfigValue(PHANDLE, "plugin:easymotion:bordercolor")->getDataStaticPtr();
-	static auto *const ROUNDING = (Hyprlang::INT* const *)HyprlandAPI::getConfigValue(PHANDLE, "plugin:easymotion:rounding")->getDataStaticPtr();
-	static auto *const BLUR = (Hyprlang::INT* const *)HyprlandAPI::getConfigValue(PHANDLE, "plugin:easymotion:blur")->getDataStaticPtr();
-	static auto *const XRAY = (Hyprlang::INT* const *)HyprlandAPI::getConfigValue(PHANDLE, "plugin:easymotion:xray")->getDataStaticPtr();
-	static auto *const BLURA = (Hyprlang::FLOAT* const *)HyprlandAPI::getConfigValue(PHANDLE, "plugin:easymotion:blurA")->getDataStaticPtr();
-	static auto *const MOTIONKEYS = (Hyprlang::STRING const *)HyprlandAPI::getConfigValue(PHANDLE, "plugin:easymotion:motionkeys")->getDataStaticPtr();
-	static auto *const MOTIONLABELS = (Hyprlang::STRING const *)HyprlandAPI::getConfigValue(PHANDLE, "plugin:easymotion:motionlabels")->getDataStaticPtr();
-	static auto *const FSACTION = (Hyprlang::STRING const *)HyprlandAPI::getConfigValue(PHANDLE, "plugin:easymotion:fullscreen_action")->getDataStaticPtr();
-	static auto *const ONLYSPECIAL = (Hyprlang::INT* const *)HyprlandAPI::getConfigValue(PHANDLE, "plugin:easymotion:only_special")->getDataStaticPtr();
-
-
+	// Config values are read from the dispatch argument (e.g. "textsize:50,blur:3").
+	// Hyprland's plugin config-value API (addConfigValue/getConfigValue) is
+	// legacy-config only and returns null under the Lua config manager, so we rely
+	// on SMotionActionDesc's built-in defaults plus per-call overrides below.
 	CVarList emargs(args, 0, ',');
 	SMotionActionDesc actionDesc;
-
-	actionDesc.textSize = **TEXTSIZE;
-	actionDesc.textColor = **TEXTCOLOR;
-	actionDesc.backgroundColor = **BGCOLOR;
-	actionDesc.textFont = *TEXTFONT;
-	CVarList2 cpadding = CVarList2(*TEXTPADDING);
-	actionDesc.boxPadding.parseGapData(cpadding);
-	actionDesc.rounding = **ROUNDING;
-	actionDesc.borderSize = **BORDERSIZE;
-	if(!parseBorderGradient(*BORDERCOLOR, &actionDesc.borderColor)) {
-		actionDesc.borderColor.m_colors.clear();
-		actionDesc.borderColor.m_angle = 0;
-	}
-	actionDesc.motionKeys = *MOTIONKEYS;
-	actionDesc.motionLabels = *MOTIONLABELS;
-	actionDesc.blur = **BLUR;
-	actionDesc.xray = **XRAY;
-	actionDesc.blurA = **BLURA;
-	actionDesc.fullscreen_action = std::string(*FSACTION);
-	actionDesc.only_special = **ONLYSPECIAL;
-
 
 	for(size_t i = 0; i < emargs.size(); i++)
 	{
